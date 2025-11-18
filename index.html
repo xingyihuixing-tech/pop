@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>音乐节拍图片播放器</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 图片显示区域 -->
+    <div id="image-container" class="image-container">
+        <img id="current-image" class="current-image" alt="当前图片">
+        <div id="image-overlay" class="image-overlay"></div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div id="control-panel" class="control-panel">
+        <!-- 顶部控制栏 -->
+        <div class="control-header">
+            <button id="fullscreen-btn" class="btn-icon" title="全屏">⛶</button>
+            <h2>音乐节拍图片播放器</h2>
+            <button id="toggle-panel-btn" class="btn-icon" title="收起/展开">▼</button>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div id="panel-content" class="panel-content">
+            <!-- 音乐控制区域 -->
+            <div class="control-section">
+                <h3>音乐控制</h3>
+                <div class="control-group">
+                    <input type="file" id="music-file" accept="audio/*" style="display: none;">
+                    <button id="select-music-btn" class="btn-primary">选择音乐文件</button>
+                    <span id="music-name" class="file-name">未选择</span>
+                </div>
+                <div class="control-group">
+                    <button id="play-pause-btn" class="btn-primary" disabled>播放</button>
+                    <span id="bpm-display" class="bpm-display">BPM: --</span>
+                </div>
+            </div>
+
+            <!-- 节拍器控制区域 -->
+            <div class="control-section">
+                <h3>节拍器模式</h3>
+                <div class="control-group">
+                    <label>
+                        <input type="radio" name="mode" value="music" checked> 音乐模式
+                    </label>
+                    <label>
+                        <input type="radio" name="mode" value="metronome"> 节拍器模式
+                    </label>
+                </div>
+                <div id="metronome-controls" class="metronome-controls" style="display: none;">
+                    <div class="control-group">
+                        <label>BPM: <input type="number" id="metronome-bpm" min="30" max="200" value="120" class="number-input"></label>
+                    </div>
+                    <div class="control-group">
+                        <label>节拍声音:
+                            <select id="metronome-sound" class="select-input">
+                                <option value="kick">鼓点 (Kick)</option>
+                                <option value="snare">军鼓 (Snare)</option>
+                                <option value="hihat">踩镲 (Hihat)</option>
+                                <option value="beep">提示音 (Beep)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enable-tempo-change"> 启用非等速节拍
+                        </label>
+                    </div>
+                    <div id="tempo-change-controls" class="tempo-change-controls" style="display: none;">
+                        <div class="control-group">
+                            <label>起始 BPM: <input type="number" id="start-bpm" min="30" max="200" value="60" class="number-input"></label>
+                        </div>
+                        <div class="control-group">
+                            <label>结束 BPM: <input type="number" id="end-bpm" min="30" max="200" value="120" class="number-input"></label>
+                        </div>
+                        <div class="control-group">
+                            <label>持续时间(秒): <input type="number" id="tempo-duration" min="1" value="30" class="number-input"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图片控制区域 -->
+            <div class="control-section">
+                <h3>图片控制</h3>
+                <div class="control-group">
+                    <input type="file" id="image-folder" webkitdirectory directory multiple accept="image/*" style="display: none;">
+                    <button id="select-folder-btn" class="btn-primary">选择相册文件夹</button>
+                    <span id="image-count" class="file-name">0 张图片</span>
+                </div>
+                <div class="control-group">
+                    <label>播放模式:
+                        <select id="play-mode" class="select-input">
+                            <option value="sequential">顺序播放</option>
+                            <option value="random">随机播放</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 转场效果控制 -->
+            <div class="control-section">
+                <h3>转场效果</h3>
+                <div class="control-group">
+                    <label>
+                        <input type="radio" name="transition-mode" value="random" checked> 随机转场
+                    </label>
+                    <label>
+                        <input type="radio" name="transition-mode" value="custom"> 自定义转场
+                    </label>
+                </div>
+                <div id="transition-select" class="transition-select" style="display: none;">
+                    <select id="transition-type" class="select-input">
+                        <option value="bounce">弹跳</option>
+                        <option value="zoom-pop">放大弹出</option>
+                        <option value="rotate-in">旋转进入</option>
+                        <option value="fade">淡入淡出</option>
+                        <option value="slide">滑动</option>
+                        <option value="scale">缩放</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+    </div>
+
+    <script src="js/audio-processor.js"></script>
+    <script src="js/metronome.js"></script>
+    <script src="js/image-manager.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/sync-controller.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // 注册Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker 注册成功:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker 注册失败:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
+
